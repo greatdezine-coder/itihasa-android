@@ -1,0 +1,8 @@
+{
+  "appId": "com.itihasa.app",
+  "appName": "Itihasa",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#24160c"
+  }
+}

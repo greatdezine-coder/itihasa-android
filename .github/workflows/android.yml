@@ -1,0 +1,54 @@
+name: Build Android app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install
+        run: npm ci
+
+      - name: Copy the app into the Android project
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          mkdir -p ../out
+          cp app/build/outputs/apk/release/app-release.apk ../out/Itihasa-1.0.${{ github.run_number }}.apk
+          ls -la ../out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Itihasa-apk
+          path: out/*.apk
+
+      - name: Publish as a release (easy download on a phone)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Itihasa build ${{ github.run_number }}
+          body: Install Itihasa-1.0.${{ github.run_number }}.apk on an Android phone (allow "install unknown apps" when asked).
+          files: out/*.apk
